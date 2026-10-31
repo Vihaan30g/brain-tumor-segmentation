@@ -1,0 +1,68 @@
+experiment:
+  name: transunet_dataset1
+  seed: 42
+  output_root: runs            # relative paths are relative to the repo root
+dataset:
+  name: brain_png
+  root: data/dataset1          # folder containing images/ and masks/ (relative to the repo root, or absolute)
+  images_dir: images
+  masks_dir: masks
+  split_file: data/splits/dataset1_seed42.json
+  split_ratio: [0.70, 0.15, 0.15]
+  img_size: 256
+  mask_threshold: 127
+  cache_in_ram: true
+preprocessing:
+  percentile_clip: [0.5, 99.5]
+  clahe: {enabled: true, clip_limit: 2.0, tile_grid: [8, 8]}
+  mean: 0.5
+  std: 0.5
+augmentation:
+  hflip_p: 0.5
+  vflip_p: 0.5
+  affine_p: 0.7
+  rotate_deg: 15
+  scale: [0.85, 1.15]
+  translate_frac: 0.05
+  elastic_p: 0.2
+  elastic_alpha: 30
+  elastic_sigma: 5
+  brightness_contrast_p: 0.5
+  brightness_delta: 0.1
+  contrast_range: [0.85, 1.15]
+  gamma_p: 0.3
+  gamma_range: [0.8, 1.2]
+  noise_p: 0.2
+  noise_std: 0.02
+model:
+  name: transunet
+  vit_name: vit_base_r50_s16_224.orig_in21k
+  pretrained: true             # ImageNet weights for the ViT hybrid AND the ResNet-50 skip encoder
+  # resnet_pretrained: false   # optional: override the ResNet-50 only (default: same as `pretrained`)
+  num_classes: 1
+  decoder_channels: [256, 128, 64, 16]
+  skip_channels: [1024, 512, 256, 0]   # = ResNet-50 stage 3 / 2 / 1 outputs (informational; checked at build time)
+loss:
+  bce_weight: 1.0
+  dice_weight: 1.0
+  dice_smooth: 1.0
+train:
+  epochs: 100
+  batch_size: 16
+  val_batch_size: null         # null = same as batch_size (a bigger eval batch can run out of GPU memory)
+  num_workers: 4
+  amp: true
+  grad_clip_norm: 1.0
+  lr_encoder: 0.0001
+  lr_decoder: 0.0003
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  warmup_epochs: 5
+  min_lr: 0.000001
+  early_stopping_patience: 30
+  val_threshold: 0.5
+  hd95_every_n_epochs: 1       # 0 = never
+  log_every_n_iters: 20
+viz:
+  num_samples: 5               # validation slices saved as PNG after every epoch
+  every_n_epochs: 1

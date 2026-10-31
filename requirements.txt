@@ -1,0 +1,10 @@
+# torch / torchvision: install the build that matches your CUDA version first (already done in ~/ml_env).
+torch
+torchvision
+timm
+numpy
+opencv-python-headless
+scipy
+pyyaml
+tensorboard
+tqdm

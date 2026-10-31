@@ -1,0 +1,48 @@
+# ---- data (large, not for git). Only the split files and the data README are tracked.
+data/*
+!data/README.md
+!data/splits/
+data/splits/*
+!data/splits/*.json
+
+# ---- experiment outputs: checkpoints, tensorboard logs, sample images, metrics
+runs/
+logs/
+tensorboard/
+lightning_logs/
+wandb/
+events.out.tfevents.*
+
+# ---- model weights / arrays / archives
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.npy
+*.npz
+*.tar
+*.tar.gz
+*.zip
+pretrained/
+
+# ---- python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- virtual environments
+.venv/
+venv/
+env/
+ml_env/
+ml_venv/
+
+# ---- editors / OS
+.vscode/
+.idea/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
