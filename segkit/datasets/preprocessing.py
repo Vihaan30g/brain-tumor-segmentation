@@ -31,6 +31,10 @@ def read_mask(path, threshold=127):
     image = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
     if image is None:
         raise ValueError(f"Could not read mask: {path}")
+    if image.ndim == 3:
+        image = image[:, :, 0]
+    if image.dtype == np.uint16 and image.max() <= 1:
+        return (image > 0).astype(np.uint8)
     image = _to_uint8_grayscale(image)
     # Safety net: masks stored as {0,1} would be wiped out by a threshold of 127.
     if image.max() <= 1:
@@ -43,6 +47,26 @@ def resize_pair(image, mask, img_size, interpolation=cv2.INTER_AREA):
     mask = cv2.resize(mask, (img_size, img_size), interpolation=cv2.INTER_NEAREST)
     mask = (mask > 0.5).astype(np.uint8)
     return image, mask
+
+
+def preprocess_image(image_path, cfg):
+    """Apply the configured inference preprocessing and return uint8 image plus original shape."""
+    image = read_image(image_path)
+    original_shape = image.shape
+    image = cv2.resize(
+        image,
+        (int(cfg.dataset.img_size), int(cfg.dataset.img_size)),
+        interpolation=cv2.INTER_AREA,
+    )
+    image = apply_percentile_clip(image, tuple(cfg.preprocessing.percentile_clip))
+    if cfg.preprocessing.clahe.enabled:
+        image = apply_clahe(
+            image,
+            True,
+            cfg.preprocessing.clahe.clip_limit,
+            cfg.preprocessing.clahe.tile_grid,
+        )
+    return image.astype(np.uint8), original_shape
 
 
 def apply_percentile_clip(image, percentile_clip):
@@ -69,13 +93,14 @@ def apply_clahe(image, enabled, clip_limit=2.0, tile_grid=(8, 8)):
 
 def preprocess_pair(image_path, mask_path, cfg):
     """Read, resize, percentile-clip and CLAHE one image/mask pair -> uint8 arrays (H, W)."""
-    image = read_image(image_path)
+    image, original_shape = preprocess_image(image_path, cfg)
     mask = read_mask(mask_path, threshold=int(cfg.dataset.mask_threshold))
-    if image.shape != mask.shape:
-        mask = cv2.resize(mask, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_NEAREST)
-    image, mask = resize_pair(image, mask, int(cfg.dataset.img_size))
-    clip_range = tuple(cfg.preprocessing.percentile_clip)
-    image = apply_percentile_clip(image, clip_range)
-    if cfg.preprocessing.clahe.enabled:
-        image = apply_clahe(image, True, cfg.preprocessing.clahe.clip_limit, cfg.preprocessing.clahe.tile_grid)
+    if mask.shape != original_shape:
+        mask = cv2.resize(mask, (original_shape[1], original_shape[0]), interpolation=cv2.INTER_NEAREST)
+    mask = cv2.resize(
+        mask,
+        (int(cfg.dataset.img_size), int(cfg.dataset.img_size)),
+        interpolation=cv2.INTER_NEAREST,
+    )
+    mask = (mask > 0.5).astype(np.uint8)
     return image.astype(np.uint8), mask.astype(np.uint8)

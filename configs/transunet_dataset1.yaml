@@ -48,7 +48,7 @@ loss:
   dice_smooth: 1.0
 train:
   epochs: 100
-  batch_size: 16
+  batch_size: 4
   val_batch_size: null         # null = same as batch_size (a bigger eval batch can run out of GPU memory)
   num_workers: 4
   amp: true

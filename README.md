@@ -65,6 +65,20 @@ python scripts/evaluate.py --checkpoint path/to/best.pt --split val
 
 Writes `eval_test/metrics.json`, `per_slice.csv` and overlay images next to the run.
 
+## Predict a mask for one image
+
+Pass an image filename from `data/dataset1/images/` or a path to another grayscale PNG:
+
+```bash
+python scripts/predict.py --image 123.png
+python scripts/predict.py --image /path/to/brain_mri.png --checkpoint runs/transunet_dataset1/<timestamp>/checkpoints/best.pt
+```
+
+By default, the script uses `checkpoints/best.pt` from the latest run and saves a binary
+`*_mask.png` plus an input/mask/overlay comparison `*_prediction.png` in that run's `predictions/`
+folder. Use `--output-dir` to choose another folder or `--threshold` to override the configured
+prediction threshold.
+
 ## Notes
 
 * Metrics: `dice/iou/precision/recall/specificity` are pooled over all validation pixels (this is what picks
